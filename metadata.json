@@ -1,0 +1,6 @@
+{
+  "name": "DiSanMeta — Mô tả & Kiểm chứng Di sản Tư liệu Số",
+  "description": "Công cụ mô tả, lưu trữ, kiểm chứng và xuất hồ sơ di sản tư liệu số theo chuẩn Dublin Core tiếng Việt cho bộ sưu tập Bia Tiến sĩ tại Văn Miếu – Quốc Tử Giám.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

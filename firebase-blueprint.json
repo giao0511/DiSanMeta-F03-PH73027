@@ -1,0 +1,297 @@
+{
+  "entities": {
+    "HeritageCollection": {
+      "title": "HeritageCollection",
+      "description": "Metadata for the archival collection scope (15 Doctoral Steles at Temple of Literature).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "materialType": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "plannedTotal": { "type": "integer" },
+        "repositoryName": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "repositoryAddress": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "rightsContactUnit": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "rightsStatus": { "type": "string", "enum": ["CHƯA XÁC MINH", "ĐÃ XÁC MINH MỘT PHẦN", "ĐÃ XÁC MINH ĐẦY ĐỦ", "ĐÃ THU HỒI"] },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "isPublic": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "materialType", "plannedTotal", "repositoryName", "repositoryAddress", "rightsContactUnit", "rightsStatus", "isPublic", "updatedAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Complete internal Dublin Core, provenance, verification, and rights record managed by administrators.",
+      "type": "object",
+      "properties": {
+        "recordCode": { "type": "string", "minLength": 3, "maxLength": 32, "pattern": "^[A-Z0-9_\\-]+$" },
+        "collectionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dcTitle": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "dcCreator": { "type": "string", "maxLength": 500 },
+        "dcSubject": { "type": "string", "maxLength": 500 },
+        "dcDescription": { "type": "string", "maxLength": 5000 },
+        "dcPublisher": { "type": "string", "maxLength": 500 },
+        "dcContributor": { "type": "string", "maxLength": 500 },
+        "dcDate": { "type": "string", "maxLength": 200 },
+        "dcType": { "type": "string", "maxLength": 200 },
+        "dcFormat": { "type": "string", "maxLength": 500 },
+        "dcIdentifier": { "type": "string", "maxLength": 200 },
+        "dcSource": { "type": "string", "maxLength": 1000 },
+        "dcLanguage": { "type": "string", "maxLength": 200 },
+        "dcRelation": { "type": "string", "maxLength": 1000 },
+        "dcCoverage": { "type": "string", "maxLength": 500 },
+        "dcRights": { "type": "string", "maxLength": 1000 },
+        "currentRepository": { "type": "string", "maxLength": 500 },
+        "sensitiveStorageNote": { "type": "string", "maxLength": 1000 },
+        "historicalRepository": { "type": "string", "maxLength": 500 },
+        "manifestationType": { "type": "string", "enum": ["bản gốc", "bản sao", "bản số của gốc", "bản số của sao", "Chưa xác định"] },
+        "originalCondition": { "type": "string", "maxLength": 500 },
+        "damageDescription": { "type": "string", "maxLength": 2000 },
+        "repositoryRegistrationNo": { "type": "string", "maxLength": 200 },
+        "rightsAuthority": { "type": "string", "maxLength": 500 },
+        "rightsConfirmedBy": { "type": "string", "maxLength": 300 },
+        "rightsConsentDate": { "type": "string", "maxLength": 100 },
+        "rightsEvidence": { "type": "string", "maxLength": 1000 },
+        "rightsScope": { "type": "string", "maxLength": 1000 },
+        "recordRightsStatus": { "type": "string", "enum": ["Chưa xác minh quyền", "Đã cấp phép", "Từ chối", "Đã thu hồi"] },
+        "allowImagePublish": { "type": "boolean" },
+        "allowImageDownload": { "type": "boolean" },
+        "nonPublicContent": { "type": "string", "maxLength": 2000 },
+        "transcriptionText": { "type": "string", "maxLength": 8000 },
+        "transcriptionVerification": { "type": "string", "enum": ["Đã kiểm chứng", "Chưa kiểm chứng", "Chưa đọc được", "Đã đối chiếu nguồn", "Chờ kiểm chứng", "Chưa có nguồn"] },
+        "translationText": { "type": "string", "maxLength": 8000 },
+        "translationVerification": { "type": "string", "enum": ["Đã kiểm chứng", "Chưa kiểm chứng", "Chưa đọc được", "Đã đối chiếu nguồn", "Chờ kiểm chứng", "Chưa có nguồn"] },
+        "verifierName": { "type": "string", "maxLength": 200 },
+        "verifiedDate": { "type": "string", "maxLength": 100 },
+        "digitizerName": { "type": "string", "maxLength": 200 },
+        "digitizedDate": { "type": "string", "maxLength": 100 },
+        "unclearPoints": { "type": "string", "maxLength": 2000 },
+        "recordVerificationLevel": { "type": "string", "enum": ["Chưa có nguồn", "Chờ kiểm chứng", "Đã đối chiếu nguồn", "Có thông tin mâu thuẫn", "Không thể xác minh", "Chờ xác minh", "Đang đối chiếu", "Đã kiểm chứng", "Cần bổ sung"] },
+        "isPubliclyPublished": { "type": "boolean" },
+        "images": { "type": "array" },
+        "sourceIds": { "type": "array" },
+        "evidenceMappings": { "type": "array" },
+        "createdByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "updatedByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdByName": { "type": "string", "maxLength": 200 },
+        "updatedByName": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recordCode", "collectionId", "dcTitle", "manifestationType", "transcriptionVerification", "translationVerification", "recordVerificationLevel", "isPubliclyPublished", "images", "sourceIds", "evidenceMappings", "createdByUid", "updatedByUid", "createdAt", "updatedAt"]
+    },
+    "PublicRecord": {
+      "title": "PublicRecord",
+      "description": "Publicly accessible projection of a heritage record with sensitive storage notes, private content, and unpermitted images stripped.",
+      "type": "object",
+      "properties": {
+        "recordCode": { "type": "string", "minLength": 3, "maxLength": 32, "pattern": "^[A-Z0-9_\\-]+$" },
+        "collectionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dcTitle": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "dcCreator": { "type": "string", "maxLength": 500 },
+        "dcSubject": { "type": "string", "maxLength": 500 },
+        "dcDescription": { "type": "string", "maxLength": 5000 },
+        "dcPublisher": { "type": "string", "maxLength": 500 },
+        "dcContributor": { "type": "string", "maxLength": 500 },
+        "dcDate": { "type": "string", "maxLength": 200 },
+        "dcType": { "type": "string", "maxLength": 200 },
+        "dcFormat": { "type": "string", "maxLength": 500 },
+        "dcIdentifier": { "type": "string", "maxLength": 200 },
+        "dcSource": { "type": "string", "maxLength": 1000 },
+        "dcLanguage": { "type": "string", "maxLength": 200 },
+        "dcRelation": { "type": "string", "maxLength": 1000 },
+        "dcCoverage": { "type": "string", "maxLength": 500 },
+        "dcRights": { "type": "string", "maxLength": 1000 },
+        "currentRepository": { "type": "string", "maxLength": 500 },
+        "historicalRepository": { "type": "string", "maxLength": 500 },
+        "manifestationType": { "type": "string", "enum": ["bản gốc", "bản sao", "bản số của gốc", "bản số của sao", "Chưa xác định"] },
+        "originalCondition": { "type": "string", "maxLength": 500 },
+        "damageDescription": { "type": "string", "maxLength": 2000 },
+        "repositoryRegistrationNo": { "type": "string", "maxLength": 200 },
+        "rightsAuthority": { "type": "string", "maxLength": 500 },
+        "rightsConfirmedBy": { "type": "string", "maxLength": 300 },
+        "rightsConsentDate": { "type": "string", "maxLength": 100 },
+        "rightsEvidence": { "type": "string", "maxLength": 1000 },
+        "rightsScope": { "type": "string", "maxLength": 1000 },
+        "recordRightsStatus": { "type": "string", "enum": ["Chưa xác minh quyền", "Đã cấp phép", "Từ chối", "Đã thu hồi"] },
+        "allowImagePublish": { "type": "boolean" },
+        "allowImageDownload": { "type": "boolean" },
+        "transcriptionText": { "type": "string", "maxLength": 8000 },
+        "transcriptionVerification": { "type": "string", "enum": ["Đã kiểm chứng", "Chưa kiểm chứng", "Chưa đọc được", "Đã đối chiếu nguồn", "Chờ kiểm chứng", "Chưa có nguồn"] },
+        "translationText": { "type": "string", "maxLength": 8000 },
+        "translationVerification": { "type": "string", "enum": ["Đã kiểm chứng", "Chưa kiểm chứng", "Chưa đọc được", "Đã đối chiếu nguồn", "Chờ kiểm chứng", "Chưa có nguồn"] },
+        "verifierName": { "type": "string", "maxLength": 200 },
+        "verifiedDate": { "type": "string", "maxLength": 100 },
+        "digitizerName": { "type": "string", "maxLength": 200 },
+        "digitizedDate": { "type": "string", "maxLength": 100 },
+        "unclearPoints": { "type": "string", "maxLength": 2000 },
+        "recordVerificationLevel": { "type": "string", "enum": ["Chưa có nguồn", "Chờ kiểm chứng", "Đã đối chiếu nguồn", "Có thông tin mâu thuẫn", "Không thể xác minh", "Chờ xác minh", "Đang đối chiếu", "Đã kiểm chứng", "Cần bổ sung"] },
+        "isPubliclyPublished": { "type": "boolean" },
+        "hasRedactedContent": { "type": "boolean" },
+        "images": { "type": "array" },
+        "sourceIds": { "type": "array" },
+        "evidenceMappings": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recordCode", "collectionId", "dcTitle", "manifestationType", "transcriptionVerification", "translationVerification", "recordVerificationLevel", "isPubliclyPublished", "hasRedactedContent", "images", "sourceIds", "evidenceMappings", "createdAt", "updatedAt"]
+    },
+    "SourceItem": {
+      "title": "SourceItem",
+      "description": "Bibliographic, archival, technical, or legal source used in DiSanMeta.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "organizationOrAuthor": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "documentTitle": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "urlOrArchiveCode": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "accessDate": { "type": "string", "maxLength": 100 },
+        "sourceCategory": { "type": "string", "enum": ["Chính thống", "Học thuật", "Lưu trữ nội bộ", "Tham khảo", "Tham khảo khác", "Tài liệu kỹ thuật", "Tài liệu pháp lý"] },
+        "sourceLevel": { "type": "string", "enum": ["Cấp bộ sưu tập", "Cấp từng bia", "Kỹ thuật / Pháp lý"] },
+        "provableScope": { "type": "string", "maxLength": 1000 },
+        "verificationStatus": { "type": "string", "enum": ["Chưa kiểm tra", "Chưa xác minh liên kết", "Chờ kiểm chứng", "Đã đối chiếu", "Đã đối chiếu nguồn", "Có mâu thuẫn", "Có thông tin mâu thuẫn", "Không xác minh được", "Không thể xác minh"] },
+        "lastLinkCheckResult": { "type": "string", "maxLength": 500 },
+        "lastLinkCheckedAt": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "isPublic": { "type": "boolean" },
+        "createdByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "organizationOrAuthor", "documentTitle", "urlOrArchiveCode", "sourceCategory", "verificationStatus", "isPublic", "createdByUid", "createdAt", "updatedAt"]
+    },
+    "PublicationRight": {
+      "title": "PublicationRight",
+      "description": "Granular publication authorization and revocation record managed by administrators.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetType": { "type": "string", "enum": ["collection", "record"] },
+        "recordId": { "type": "string", "maxLength": 128 },
+        "recordCode": { "type": "string", "maxLength": 64 },
+        "authorizerName": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "authorizerRole": { "type": "string", "maxLength": 300 },
+        "confirmedBy": { "type": "string", "maxLength": 300 },
+        "consentDate": { "type": "string", "maxLength": 100 },
+        "evidenceDescription": { "type": "string", "maxLength": 1000 },
+        "scopeDescription": { "type": "string", "maxLength": 1000 },
+        "restrictedParts": { "type": "string", "maxLength": 1000 },
+        "canView": { "type": "boolean" },
+        "canPhotograph": { "type": "boolean" },
+        "canPublishWebsite": { "type": "boolean" },
+        "canDownloadImage": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["Chưa xác minh quyền", "Chưa xác minh", "Đã cấp phép", "Từ chối", "Đã thu hồi"] },
+        "revokedReason": { "type": "string", "maxLength": 1000 },
+        "updatedByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "targetType", "authorizerName", "canView", "canPhotograph", "canPublishWebsite", "canDownloadImage", "status", "updatedByUid", "createdAt", "updatedAt"]
+    },
+    "VerificationLog": {
+      "title": "VerificationLog",
+      "description": "Publicly auditable historical verification log without PII.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recordId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "recordCode": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "verifierName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "previousLevel": { "type": "string", "maxLength": 100 },
+        "newLevel": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 1500 },
+        "isPublic": { "type": "boolean" },
+        "createdByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "recordId", "recordCode", "verifierName", "previousLevel", "newLevel", "isPublic", "createdByUid", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Internal administrative edit history log.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recordId": { "type": "string", "maxLength": 128 },
+        "recordCode": { "type": "string", "maxLength": 64 },
+        "actorUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "actorName": { "type": "string", "maxLength": 200 },
+        "action": { "type": "string", "maxLength": 100 },
+        "changedFields": { "type": "array" },
+        "summary": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorUid", "actorName", "action", "changedFields", "summary", "createdAt"]
+    },
+    "ChecklistItem": {
+      "title": "ChecklistItem",
+      "description": "Pre-submission acceptance verification checklist item.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderIndex": { "type": "integer" },
+        "question": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "evidenceNote": { "type": "string", "maxLength": 1500 },
+        "evidenceUrl": { "type": "string", "maxLength": 500 },
+        "isCompleted": { "type": "boolean" },
+        "verifiedByName": { "type": "string", "maxLength": 200 },
+        "isPublic": { "type": "boolean" },
+        "updatedByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "orderIndex", "question", "isCompleted", "isPublic", "updatedByUid", "updatedAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator role document.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["admin", "reviewer"] },
+        "addedByUid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "addedByUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/collections/{collectionId}": {
+      "schema": { "$ref": "#/entities/HeritageCollection" },
+      "description": "Collection scope metadata for DiSanMeta."
+    },
+    "/public_records/{recordId}": {
+      "schema": { "$ref": "#/entities/PublicRecord" },
+      "description": "Publicly accessible heritage records without sensitive storage notes or unpermitted images."
+    },
+    "/admin_records/{recordId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Complete archival heritage records accessible only to authenticated admins."
+    },
+    "/sources/{sourceId}": {
+      "schema": { "$ref": "#/entities/SourceItem" },
+      "description": "Reference sources for historical verification."
+    },
+    "/publication_rights/{rightId}": {
+      "schema": { "$ref": "#/entities/PublicationRight" },
+      "description": "Publication rights authorizations and revocations."
+    },
+    "/verification_logs/{logId}": {
+      "schema": { "$ref": "#/entities/VerificationLog" },
+      "description": "Public verification history logs."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Internal edit audit logs."
+    },
+    "/checklist_items/{itemId}": {
+      "schema": { "$ref": "#/entities/ChecklistItem" },
+      "description": "Pre-submission checklist items."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized administrator accounts."
+    }
+  }
+}

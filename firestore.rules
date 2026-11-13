@@ -1,0 +1,512 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'tuananh.tvta0112004@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isStr(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isNonEmptyStr(val, maxLen) {
+      return val is string && val.size() >= 1 && val.size() <= maxLen;
+    }
+
+    function isValidManifestation(val) {
+      return val in ['bản gốc', 'bản sao', 'bản số của gốc', 'bản số của sao', 'Chưa xác định'];
+    }
+
+    function isValidTextVerify(val) {
+      return val in ['Đã kiểm chứng', 'Chưa kiểm chứng', 'Chưa đọc được', 'Đã đối chiếu nguồn', 'Chờ kiểm chứng', 'Chưa có nguồn'];
+    }
+
+    function isValidRecordVerify(val) {
+      return val in [
+        'Chưa có nguồn', 'Chờ kiểm chứng', 'Đã đối chiếu nguồn', 'Có thông tin mâu thuẫn', 'Không thể xác minh',
+        'Chờ xác minh', 'Đang đối chiếu', 'Đã kiểm chứng', 'Cần bổ sung'
+      ];
+    }
+
+    // 3. Entity Validators
+    function isValidHeritageCollection(data) {
+      return data.keys().hasAll([
+        'id', 'name', 'materialType', 'plannedTotal', 'repositoryName',
+        'repositoryAddress', 'rightsContactUnit', 'rightsStatus', 'isPublic', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'id', 'name', 'materialType', 'plannedTotal', 'repositoryName',
+        'repositoryAddress', 'rightsContactUnit', 'rightsStatus', 'notes', 'isPublic', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isNonEmptyStr(data.name, 300) &&
+      isNonEmptyStr(data.materialType, 150) &&
+      data.plannedTotal is int && data.plannedTotal >= 0 && data.plannedTotal <= 10000 &&
+      isNonEmptyStr(data.repositoryName, 300) &&
+      isNonEmptyStr(data.repositoryAddress, 400) &&
+      isNonEmptyStr(data.rightsContactUnit, 300) &&
+      data.rightsStatus in ['CHƯA XÁC MINH', 'ĐÃ XÁC MINH MỘT PHẦN', 'ĐÃ XÁC MINH ĐẦY ĐỦ', 'ĐÃ THU HỒI'] &&
+      (!('notes' in data) || isStr(data.notes, 2000)) &&
+      data.isPublic is bool &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll([
+        'recordCode', 'collectionId', 'dcTitle', 'manifestationType',
+        'transcriptionVerification', 'translationVerification', 'recordVerificationLevel',
+        'isPubliclyPublished', 'images', 'sourceIds', 'evidenceMappings',
+        'createdByUid', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'recordCode', 'collectionId', 'dcTitle', 'dcCreator', 'dcSubject', 'dcDescription',
+        'dcPublisher', 'dcContributor', 'dcDate', 'dcType', 'dcFormat', 'dcIdentifier',
+        'dcSource', 'dcLanguage', 'dcRelation', 'dcCoverage', 'dcRights',
+        'currentRepository', 'sensitiveStorageNote', 'historicalRepository',
+        'manifestationType', 'originalCondition', 'damageDescription', 'repositoryRegistrationNo',
+        'rightsAuthority', 'rightsConfirmedBy', 'rightsConsentDate', 'rightsEvidence', 'rightsScope',
+        'recordRightsStatus', 'allowImagePublish', 'allowImageDownload', 'nonPublicContent',
+        'transcriptionText', 'transcriptionVerification', 'translationText', 'translationVerification',
+        'verifierName', 'verifiedDate', 'digitizerName', 'digitizedDate', 'unclearPoints',
+        'recordVerificationLevel', 'isPubliclyPublished', 'images', 'sourceIds', 'evidenceMappings',
+        'createdByUid', 'updatedByUid', 'createdByName', 'updatedByName', 'createdAt', 'updatedAt'
+      ]) &&
+      isNonEmptyStr(data.recordCode, 32) && data.recordCode.matches('^[A-Z0-9_\\-]+$') &&
+      isValidId(data.collectionId) &&
+      isNonEmptyStr(data.dcTitle, 500) &&
+      (!('dcCreator' in data) || isStr(data.dcCreator, 500)) &&
+      (!('dcSubject' in data) || isStr(data.dcSubject, 500)) &&
+      (!('dcDescription' in data) || isStr(data.dcDescription, 5000)) &&
+      (!('dcPublisher' in data) || isStr(data.dcPublisher, 500)) &&
+      (!('dcContributor' in data) || isStr(data.dcContributor, 500)) &&
+      (!('dcDate' in data) || isStr(data.dcDate, 200)) &&
+      (!('dcType' in data) || isStr(data.dcType, 200)) &&
+      (!('dcFormat' in data) || isStr(data.dcFormat, 500)) &&
+      (!('dcIdentifier' in data) || isStr(data.dcIdentifier, 200)) &&
+      (!('dcSource' in data) || isStr(data.dcSource, 1000)) &&
+      (!('dcLanguage' in data) || isStr(data.dcLanguage, 200)) &&
+      (!('dcRelation' in data) || isStr(data.dcRelation, 1000)) &&
+      (!('dcCoverage' in data) || isStr(data.dcCoverage, 500)) &&
+      (!('dcRights' in data) || isStr(data.dcRights, 1000)) &&
+      (!('currentRepository' in data) || isStr(data.currentRepository, 500)) &&
+      (!('sensitiveStorageNote' in data) || isStr(data.sensitiveStorageNote, 1000)) &&
+      (!('historicalRepository' in data) || isStr(data.historicalRepository, 500)) &&
+      isValidManifestation(data.manifestationType) &&
+      (!('originalCondition' in data) || isStr(data.originalCondition, 500)) &&
+      (!('damageDescription' in data) || isStr(data.damageDescription, 2000)) &&
+      (!('repositoryRegistrationNo' in data) || isStr(data.repositoryRegistrationNo, 200)) &&
+      (!('rightsAuthority' in data) || isStr(data.rightsAuthority, 500)) &&
+      (!('rightsConfirmedBy' in data) || isStr(data.rightsConfirmedBy, 300)) &&
+      (!('rightsConsentDate' in data) || isStr(data.rightsConsentDate, 100)) &&
+      (!('rightsEvidence' in data) || isStr(data.rightsEvidence, 1000)) &&
+      (!('rightsScope' in data) || isStr(data.rightsScope, 1000)) &&
+      (!('recordRightsStatus' in data) || data.recordRightsStatus in ['Chưa xác minh quyền', 'Đã cấp phép', 'Từ chối', 'Đã thu hồi']) &&
+      (!('allowImagePublish' in data) || data.allowImagePublish is bool) &&
+      (!('allowImageDownload' in data) || data.allowImageDownload is bool) &&
+      (!('nonPublicContent' in data) || isStr(data.nonPublicContent, 2000)) &&
+      (!('transcriptionText' in data) || isStr(data.transcriptionText, 8000)) &&
+      isValidTextVerify(data.transcriptionVerification) &&
+      (!('translationText' in data) || isStr(data.translationText, 8000)) &&
+      isValidTextVerify(data.translationVerification) &&
+      (!('verifierName' in data) || isStr(data.verifierName, 200)) &&
+      (!('verifiedDate' in data) || isStr(data.verifiedDate, 100)) &&
+      (!('digitizerName' in data) || isStr(data.digitizerName, 200)) &&
+      (!('digitizedDate' in data) || isStr(data.digitizedDate, 100)) &&
+      (!('unclearPoints' in data) || isStr(data.unclearPoints, 2000)) &&
+      isValidRecordVerify(data.recordVerificationLevel) &&
+      data.isPubliclyPublished is bool &&
+      data.images is list && data.images.size() <= 20 &&
+      (data.images.size() == 0 || data.images[0] is map) &&
+      data.sourceIds is list && data.sourceIds.size() <= 30 &&
+      (data.sourceIds.size() == 0 || data.sourceIds[0] is string) &&
+      data.evidenceMappings is list && data.evidenceMappings.size() <= 40 &&
+      (data.evidenceMappings.size() == 0 || data.evidenceMappings[0] is map) &&
+      isNonEmptyStr(data.createdByUid, 128) &&
+      isNonEmptyStr(data.updatedByUid, 128) &&
+      (!('createdByName' in data) || isStr(data.createdByName, 200)) &&
+      (!('updatedByName' in data) || isStr(data.updatedByName, 200)) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPublicRecord(data) {
+      return data.keys().hasAll([
+        'recordCode', 'collectionId', 'dcTitle', 'manifestationType',
+        'transcriptionVerification', 'translationVerification', 'recordVerificationLevel',
+        'isPubliclyPublished', 'hasRedactedContent', 'images', 'sourceIds',
+        'evidenceMappings', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'recordCode', 'collectionId', 'dcTitle', 'dcCreator', 'dcSubject', 'dcDescription',
+        'dcPublisher', 'dcContributor', 'dcDate', 'dcType', 'dcFormat', 'dcIdentifier',
+        'dcSource', 'dcLanguage', 'dcRelation', 'dcCoverage', 'dcRights',
+        'currentRepository', 'historicalRepository',
+        'manifestationType', 'originalCondition', 'damageDescription', 'repositoryRegistrationNo',
+        'rightsAuthority', 'rightsConfirmedBy', 'rightsConsentDate', 'rightsEvidence', 'rightsScope',
+        'recordRightsStatus', 'allowImagePublish', 'allowImageDownload',
+        'transcriptionText', 'transcriptionVerification', 'translationText', 'translationVerification',
+        'verifierName', 'verifiedDate', 'digitizerName', 'digitizedDate', 'unclearPoints',
+        'recordVerificationLevel', 'isPubliclyPublished', 'hasRedactedContent',
+        'images', 'sourceIds', 'evidenceMappings', 'createdAt', 'updatedAt'
+      ]) &&
+      isNonEmptyStr(data.recordCode, 32) && data.recordCode.matches('^[A-Z0-9_\\-]+$') &&
+      isValidId(data.collectionId) &&
+      isNonEmptyStr(data.dcTitle, 500) &&
+      (!('dcCreator' in data) || isStr(data.dcCreator, 500)) &&
+      (!('dcSubject' in data) || isStr(data.dcSubject, 500)) &&
+      (!('dcDescription' in data) || isStr(data.dcDescription, 5000)) &&
+      (!('dcPublisher' in data) || isStr(data.dcPublisher, 500)) &&
+      (!('dcContributor' in data) || isStr(data.dcContributor, 500)) &&
+      (!('dcDate' in data) || isStr(data.dcDate, 200)) &&
+      (!('dcType' in data) || isStr(data.dcType, 200)) &&
+      (!('dcFormat' in data) || isStr(data.dcFormat, 500)) &&
+      (!('dcIdentifier' in data) || isStr(data.dcIdentifier, 200)) &&
+      (!('dcSource' in data) || isStr(data.dcSource, 1000)) &&
+      (!('dcLanguage' in data) || isStr(data.dcLanguage, 200)) &&
+      (!('dcRelation' in data) || isStr(data.dcRelation, 1000)) &&
+      (!('dcCoverage' in data) || isStr(data.dcCoverage, 500)) &&
+      (!('dcRights' in data) || isStr(data.dcRights, 1000)) &&
+      (!('currentRepository' in data) || isStr(data.currentRepository, 500)) &&
+      (!('historicalRepository' in data) || isStr(data.historicalRepository, 500)) &&
+      isValidManifestation(data.manifestationType) &&
+      (!('originalCondition' in data) || isStr(data.originalCondition, 500)) &&
+      (!('damageDescription' in data) || isStr(data.damageDescription, 2000)) &&
+      (!('repositoryRegistrationNo' in data) || isStr(data.repositoryRegistrationNo, 200)) &&
+      (!('rightsAuthority' in data) || isStr(data.rightsAuthority, 500)) &&
+      (!('rightsConfirmedBy' in data) || isStr(data.rightsConfirmedBy, 300)) &&
+      (!('rightsConsentDate' in data) || isStr(data.rightsConsentDate, 100)) &&
+      (!('rightsEvidence' in data) || isStr(data.rightsEvidence, 1000)) &&
+      (!('rightsScope' in data) || isStr(data.rightsScope, 1000)) &&
+      (!('recordRightsStatus' in data) || data.recordRightsStatus in ['Chưa xác minh quyền', 'Đã cấp phép', 'Từ chối', 'Đã thu hồi']) &&
+      (!('allowImagePublish' in data) || data.allowImagePublish is bool) &&
+      (!('allowImageDownload' in data) || data.allowImageDownload is bool) &&
+      (!('transcriptionText' in data) || isStr(data.transcriptionText, 8000)) &&
+      isValidTextVerify(data.transcriptionVerification) &&
+      (!('translationText' in data) || isStr(data.translationText, 8000)) &&
+      isValidTextVerify(data.translationVerification) &&
+      (!('verifierName' in data) || isStr(data.verifierName, 200)) &&
+      (!('verifiedDate' in data) || isStr(data.verifiedDate, 100)) &&
+      (!('digitizerName' in data) || isStr(data.digitizerName, 200)) &&
+      (!('digitizedDate' in data) || isStr(data.digitizedDate, 100)) &&
+      (!('unclearPoints' in data) || isStr(data.unclearPoints, 2000)) &&
+      isValidRecordVerify(data.recordVerificationLevel) &&
+      data.isPubliclyPublished is bool &&
+      data.hasRedactedContent is bool &&
+      data.images is list && data.images.size() <= 20 &&
+      (data.images.size() == 0 || data.images[0] is map) &&
+      data.sourceIds is list && data.sourceIds.size() <= 30 &&
+      (data.sourceIds.size() == 0 || data.sourceIds[0] is string) &&
+      data.evidenceMappings is list && data.evidenceMappings.size() <= 40 &&
+      (data.evidenceMappings.size() == 0 || data.evidenceMappings[0] is map) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSourceItem(data) {
+      return data.keys().hasAll([
+        'id', 'organizationOrAuthor', 'documentTitle', 'urlOrArchiveCode',
+        'sourceCategory', 'verificationStatus', 'isPublic', 'createdByUid', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'id', 'organizationOrAuthor', 'documentTitle', 'urlOrArchiveCode', 'accessDate',
+        'sourceCategory', 'sourceLevel', 'provableScope', 'verificationStatus',
+        'lastLinkCheckResult', 'lastLinkCheckedAt',
+        'notes', 'isPublic', 'createdByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      isNonEmptyStr(data.organizationOrAuthor, 300) &&
+      isNonEmptyStr(data.documentTitle, 500) &&
+      isNonEmptyStr(data.urlOrArchiveCode, 1000) &&
+      (!('accessDate' in data) || isStr(data.accessDate, 100)) &&
+      data.sourceCategory in ['Chính thống', 'Học thuật', 'Lưu trữ nội bộ', 'Tham khảo', 'Tham khảo khác', 'Tài liệu kỹ thuật', 'Tài liệu pháp lý'] &&
+      (!('sourceLevel' in data) || data.sourceLevel in ['Cấp bộ sưu tập', 'Cấp từng bia', 'Kỹ thuật / Pháp lý']) &&
+      (!('provableScope' in data) || isStr(data.provableScope, 1000)) &&
+      data.verificationStatus in [
+        'Chưa kiểm tra', 'Chưa xác minh liên kết', 'Chờ kiểm chứng', 'Đã đối chiếu', 'Đã đối chiếu nguồn',
+        'Có mâu thuẫn', 'Có thông tin mâu thuẫn', 'Không xác minh được', 'Không thể xác minh'
+      ] &&
+      (!('lastLinkCheckResult' in data) || isStr(data.lastLinkCheckResult, 500)) &&
+      (!('lastLinkCheckedAt' in data) || isStr(data.lastLinkCheckedAt, 100)) &&
+      (!('notes' in data) || isStr(data.notes, 2000)) &&
+      data.isPublic is bool &&
+      isNonEmptyStr(data.createdByUid, 128) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPublicationRight(data) {
+      return data.keys().hasAll([
+        'id', 'targetType', 'authorizerName', 'canView', 'canPhotograph',
+        'canPublishWebsite', 'canDownloadImage', 'status', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'id', 'targetType', 'recordId', 'recordCode', 'authorizerName', 'authorizerRole',
+        'confirmedBy', 'consentDate', 'evidenceDescription', 'scopeDescription', 'restrictedParts',
+        'canView', 'canPhotograph', 'canPublishWebsite', 'canDownloadImage',
+        'status', 'revokedReason', 'updatedByUid', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      data.targetType in ['collection', 'record'] &&
+      (!('recordId' in data) || isStr(data.recordId, 128)) &&
+      (!('recordCode' in data) || isStr(data.recordCode, 64)) &&
+      isNonEmptyStr(data.authorizerName, 300) &&
+      (!('authorizerRole' in data) || isStr(data.authorizerRole, 300)) &&
+      (!('confirmedBy' in data) || isStr(data.confirmedBy, 300)) &&
+      (!('consentDate' in data) || isStr(data.consentDate, 100)) &&
+      (!('evidenceDescription' in data) || isStr(data.evidenceDescription, 1000)) &&
+      (!('scopeDescription' in data) || isStr(data.scopeDescription, 1000)) &&
+      (!('restrictedParts' in data) || isStr(data.restrictedParts, 1000)) &&
+      data.canView is bool &&
+      data.canPhotograph is bool &&
+      data.canPublishWebsite is bool &&
+      data.canDownloadImage is bool &&
+      data.status in ['Chưa xác minh quyền', 'Chưa xác minh', 'Đã cấp phép', 'Từ chối', 'Đã thu hồi'] &&
+      (!('revokedReason' in data) || isStr(data.revokedReason, 1000)) &&
+      isNonEmptyStr(data.updatedByUid, 128) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidVerificationLog(data) {
+      return data.keys().hasAll([
+        'id', 'recordId', 'recordCode', 'verifierName', 'previousLevel',
+        'newLevel', 'isPublic', 'createdByUid', 'createdAt'
+      ]) && data.keys().hasOnly([
+        'id', 'recordId', 'recordCode', 'verifierName', 'previousLevel',
+        'newLevel', 'notes', 'isPublic', 'createdByUid', 'createdAt'
+      ]) &&
+      isValidId(data.id) &&
+      isNonEmptyStr(data.recordId, 128) &&
+      isNonEmptyStr(data.recordCode, 64) &&
+      isNonEmptyStr(data.verifierName, 200) &&
+      isStr(data.previousLevel, 100) &&
+      isNonEmptyStr(data.newLevel, 100) &&
+      (!('notes' in data) || isStr(data.notes, 1500)) &&
+      data.isPublic is bool &&
+      isNonEmptyStr(data.createdByUid, 128) &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+        'id', 'actorUid', 'actorName', 'action', 'changedFields', 'summary', 'createdAt'
+      ]) && data.keys().hasOnly([
+        'id', 'recordId', 'recordCode', 'actorUid', 'actorName', 'action',
+        'changedFields', 'summary', 'createdAt'
+      ]) &&
+      isValidId(data.id) &&
+      (!('recordId' in data) || isStr(data.recordId, 128)) &&
+      (!('recordCode' in data) || isStr(data.recordCode, 64)) &&
+      isNonEmptyStr(data.actorUid, 128) &&
+      isNonEmptyStr(data.actorName, 200) &&
+      isNonEmptyStr(data.action, 100) &&
+      data.changedFields is list && data.changedFields.size() <= 50 &&
+      (data.changedFields.size() == 0 || data.changedFields[0] is string) &&
+      isNonEmptyStr(data.summary, 1000) &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidChecklistItem(data) {
+      return data.keys().hasAll([
+        'id', 'orderIndex', 'question', 'isCompleted', 'isPublic', 'updatedByUid', 'updatedAt'
+      ]) && data.keys().hasOnly([
+        'id', 'orderIndex', 'question', 'evidenceNote', 'evidenceUrl',
+        'isCompleted', 'verifiedByName', 'isPublic', 'updatedByUid', 'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      data.orderIndex is int && data.orderIndex >= 1 && data.orderIndex <= 100 &&
+      isNonEmptyStr(data.question, 500) &&
+      (!('evidenceNote' in data) || isStr(data.evidenceNote, 1500)) &&
+      (!('evidenceUrl' in data) || isStr(data.evidenceUrl, 500)) &&
+      data.isCompleted is bool &&
+      (!('verifiedByName' in data) || isStr(data.verifiedByName, 200)) &&
+      data.isPublic is bool &&
+      isNonEmptyStr(data.updatedByUid, 128) &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll([
+        'uid', 'email', 'displayName', 'role', 'addedByUid', 'createdAt'
+      ]) && data.keys().hasOnly([
+        'uid', 'email', 'displayName', 'role', 'addedByUid', 'createdAt'
+      ]) &&
+      isValidId(data.uid) &&
+      isNonEmptyStr(data.email, 256) &&
+      isNonEmptyStr(data.displayName, 200) &&
+      data.role in ['admin', 'reviewer'] &&
+      isNonEmptyStr(data.addedByUid, 128) &&
+      data.createdAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    match /collections/{collectionId} {
+      allow get: if isValidId(collectionId) && existing().isPublic == true;
+      allow list: if existing().isPublic == true;
+      allow create: if isValidId(collectionId) && isValidHeritageCollection(incoming()) &&
+        isAdmin() &&
+        incoming().id == collectionId &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(collectionId) && isValidHeritageCollection(incoming()) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(collectionId) && isAdmin();
+    }
+
+    match /public_records/{recordId} {
+      allow get: if isValidId(recordId) && existing().isPubliclyPublished == true;
+      allow list: if existing().isPubliclyPublished == true;
+      allow create: if isValidId(recordId) && isValidPublicRecord(incoming()) &&
+        isAdmin() &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(recordId) && isValidPublicRecord(incoming()) &&
+        isAdmin() &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(recordId) && isAdmin();
+    }
+
+    match /admin_records/{recordId} {
+      allow get: if isValidId(recordId) && isAdmin();
+      allow list: if isSignedIn() && (
+        request.auth.token.email == 'tuananh.tvta0112004@gmail.com' ||
+        resource.data.createdByUid == request.auth.uid
+      );
+      allow create: if isValidId(recordId) && isValidAdminRecord(incoming()) &&
+        isAdmin() &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(recordId) && isValidAdminRecord(incoming()) &&
+        isAdmin() &&
+        incoming().createdByUid == existing().createdByUid &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(recordId) && isAdmin();
+    }
+
+    match /sources/{sourceId} {
+      allow get: if isValidId(sourceId) && existing().isPublic == true;
+      allow list: if existing().isPublic == true;
+      allow create: if isValidId(sourceId) && isValidSourceItem(incoming()) &&
+        isAdmin() &&
+        incoming().id == sourceId &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(sourceId) && isValidSourceItem(incoming()) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().createdByUid == existing().createdByUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(sourceId) && isAdmin();
+    }
+
+    match /publication_rights/{rightId} {
+      allow get: if isValidId(rightId) && isAdmin();
+      allow list: if isSignedIn() && (
+        request.auth.token.email == 'tuananh.tvta0112004@gmail.com' ||
+        resource.data.updatedByUid == request.auth.uid
+      );
+      allow create: if isValidId(rightId) && isValidPublicationRight(incoming()) &&
+        isAdmin() &&
+        incoming().id == rightId &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(rightId) && isValidPublicationRight(incoming()) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(rightId) && isAdmin();
+    }
+
+    match /verification_logs/{logId} {
+      allow get: if isValidId(logId) && existing().isPublic == true;
+      allow list: if existing().isPublic == true;
+      allow create: if isValidId(logId) && isValidVerificationLog(incoming()) &&
+        isAdmin() &&
+        incoming().id == logId &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(logId) && isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isSignedIn() && (
+        request.auth.token.email == 'tuananh.tvta0112004@gmail.com' ||
+        resource.data.actorUid == request.auth.uid
+      );
+      allow create: if isValidId(logId) && isValidAuditLog(incoming()) &&
+        isAdmin() &&
+        incoming().id == logId &&
+        incoming().actorUid == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /checklist_items/{itemId} {
+      allow get: if isValidId(itemId) && existing().isPublic == true;
+      allow list: if existing().isPublic == true;
+      allow create: if isValidId(itemId) && isValidChecklistItem(incoming()) &&
+        isAdmin() &&
+        incoming().id == itemId &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(itemId) && isValidChecklistItem(incoming()) &&
+        isAdmin() &&
+        incoming().id == existing().id &&
+        incoming().updatedByUid == request.auth.uid &&
+        incoming().updatedAt == request.time;
+      allow delete: if isValidId(itemId) && isAdmin();
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isSignedIn() && (
+        request.auth.uid == adminUid || isAdmin()
+      );
+      allow list: if isSignedIn() && request.auth.token.email == 'tuananh.tvta0112004@gmail.com';
+      allow create: if isValidId(adminUid) && isValidAdminUser(incoming()) &&
+        isAdmin() &&
+        incoming().uid == adminUid &&
+        incoming().addedByUid == request.auth.uid &&
+        incoming().createdAt == request.time;
+      allow update: if isValidId(adminUid) && isValidAdminUser(incoming()) &&
+        isAdmin() &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt;
+      allow delete: if isValidId(adminUid) && isAdmin();
+    }
+  }
+}
