@@ -31,7 +31,7 @@ const all=[...dc,...ext], keys=all.map(x=>x[0]);
 function toast(s,err=false){const t=$('toast');t.textContent=s;t.style.background=err?'#8d2d27':'#173a41';t.style.display='block';setTimeout(()=>t.style.display='none',4000)}
 async function api(path,opt={}){const headers={'Content-Type':'application/json'};if(pass)headers['x-admin-password']=pass;const r=await fetch('/api'+path,{...opt,headers:{...headers,...opt.headers}});let j=await r.json();if(!r.ok)throw Error(j.error||'Lỗi kết nối');return j}
 async function load(){data=await api(admin?'/admin':'/public');render()}
-function button(html,action,cls='outline'){return '<button class="'+cls+'" data-action="'+action+'">'+html+'</button>'}
+function button(html,action,cls='outline'){return '<button type="button" class="'+cls+'" data-action="'+action+'">'+html+'</button>'}
 function header(k,title,lead){return '<div class="eyebrow">'+k+'</div><h1>'+title+'</h1><p class="lead">'+lead+'</p>'}
 function stat(title,num,detail){return '<article class="card"><span class="muted">'+title+'</span><div class="number">'+num+'</div><span class="muted">'+detail+'</span></article>'}
 function home(){const s=data.settings||{},approved=data.records.filter(x=>x.status==='published').length, official=data.sources.filter(x=>x.official).length;
