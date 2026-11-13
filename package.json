@@ -1,0 +1,9 @@
+{
+  "name": "disanmeta-f03-ph73027",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "F03 - Công cụ mô tả tư liệu Dublin Core tiếng Việt",
+  "scripts": {"start": "node server.mjs", "test": "node --test tests/*.test.mjs"},
+  "engines": {"node": ">=20"}
+}
